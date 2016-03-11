@@ -6,5 +6,6 @@ API built for triva night app
 
   fork and clone repository
   ```javascript
+  npm install  
   npm start
   ```
