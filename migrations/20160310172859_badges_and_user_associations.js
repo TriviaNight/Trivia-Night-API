@@ -7,11 +7,11 @@ exports.up = function(knex, Promise) {
     badges.string('image_url');
   }).createTable('user_badges', function(userBadges){
     userBadges.increments().primary();
-    userBadges.integer('user_id').references('id').inTable('users');
-    userBadges.integer('badge_id').references('id').inTable('badges');
+    userBadges.integer('user_id').references('id').inTable('users').onDelete('cascade');
+    userBadges.integer('badge_id').references('id').inTable('badges').onDelete('cascade');
   });
 };
 
 exports.down = function(knex, Promise) {
-  return knex.schema.dropTable('badges').dropTable('userBadges');
+  return knex.schema.dropTable('user_badges').dropTable('badges');
 };

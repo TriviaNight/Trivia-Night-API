@@ -12,18 +12,18 @@ exports.up = function(knex, Promise) {
     questions.string('response_d');
     questions.string('response_e');
     questions.string('correct_answer').notNullable();
-    questions.integer('catagory_id').references('id').inTable('catagories');
+    questions.integer('catagory_id').references('id').inTable('catagories').onDelete('cascade');
   }).createTable('decks', function(decks){
     decks.increments().primary();
     decks.integer('user_id').references('id').inTable('users');
     decks.string('name');
   }).createTable('deck_questions', function(deckQuestions){
     deckQuestions.increments();
-    deckQuestions.integer('user_id').references('id').inTable('users');
-    deckQuestions.integer('deck_id').references('id').inTable('decks');
+    deckQuestions.integer('user_id').references('id').inTable('users').onDelete('cascade');
+    deckQuestions.integer('deck_id').references('id').inTable('decks').onDelete('cascade');
   });
 };
 
 exports.down = function(knex, Promise) {
-  return knex.schema.dropTable('catagories').dropTable('questions').dropTable('deck_questions');
+  return knex.schema.dropTable('deck_questions').dropTable('decks').dropTable('questions').dropTable('catagories');
 };
