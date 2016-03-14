@@ -12,7 +12,9 @@ exports.up = function(knex, Promise) {
     questions.string('response_d');
     questions.string('response_e');
     questions.string('correct_answer').notNullable();
-    questions.integer('catagory_id').references('id').inTable('catagories').onDelete('cascade');
+    questions.integer('catagory_id').references('id').inTable('catagories').onDelete('cascade').notNullable();
+    questions.integer('user_id').references('id').inTable('users').onDelete('cascade').notNullable();
+    questions.integer('bullshit_rating');
   }).createTable('decks', function(decks){
     decks.increments().primary();
     decks.integer('user_id').references('id').inTable('users');

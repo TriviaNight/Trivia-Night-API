@@ -13,7 +13,9 @@ exports.seed = function(knex, Promise) {
       response_d: '8',
       response_e: 'spare',
       correct_answer: 'D',
-      catagory_id: 13
+      catagory_id: 3,
+      user_id: 1,
+      bullshit_rating: 0,
     }),
     knex('questions').insert({
       question: 'What is the Dude call his white russians?',
@@ -22,7 +24,9 @@ exports.seed = function(knex, Promise) {
       response_c: 'Commie',
       response_d: 'Anna Kournikova ',
       correct_answer: 'A',
-      catagory_id: 13
+      catagory_id: 3,
+      user_id: 1,
+      bullshit_rating: 0,
     }),
     knex('questions').insert({
       question: "What is the Dude's real first name?",
@@ -32,7 +36,9 @@ exports.seed = function(knex, Promise) {
       response_d: 'Donald',
       response_e: 'Jeffrey',
       correct_answer: 'E',
-      catagory_id: 13
+      catagory_id: 3,
+      user_id: 1,
+      bullshit_rating: 0,
     })
   ]);
 };
