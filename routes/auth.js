@@ -5,33 +5,40 @@ var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 var knex = require('../db/knex');
 var jwt = require('jsonwebtoken');
 
+require('dotenv').load();
+
 
 passport.use(new GoogleStrategy(
   {
     clientID: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     callbackURL: process.env.CALLBACK_URL
-    // passReqToCallback: true
   },
   function(token, tokenSecret, profile, done) {
-    console.log(profile.emails)
-    var user = profile.emails[0].value;
+    console.log(profile);
+    var userProfile = {
+      email: profile.emails[0].value,
+      rating: 1000,
+    };
+    if(profile.photos[0].value){
+      userProfile.image_url = profile.photos[0].value;
+    }
 
-
-      knex('users').where('email', user).select().first().then(function(hasUser) {
-        console.log(user);
-        if (!hasUser) {
-          console.log("no user");
-          Users().insert({
-            pi_id: null,
-            email: user
-          }).then(function() {
-            done(null,user);
-          })
+    knex('users').where('email', userProfile.email).select().first().then(function(user) {
+      if (!user) {
+        console.log("no user");
+        knex('users').insert(userProfile, 'id').then(function(id) {
+            userProfile.id = id;
+            done(null, userProfile);
+          }).catch(function(error){
+            done(error, null);
+          });
         } else {
-          done(null,user);
+          done(null, user);
         }
-      })
+      }).catch(function(error){
+        done(error, null);
+      });
   }
 ));
 
@@ -40,10 +47,8 @@ passport.use(new GoogleStrategy(
       if (err) {
         next(err);
       } else if (user) {
-        console.log('User = '+user);
 
-
-        // res.setHeader('x-token',token);
+        // create token
         var token = jwt.sign(user, process.env.JWT_SECRET, {
           expiresIn:15778463,
         })
@@ -56,21 +61,19 @@ passport.use(new GoogleStrategy(
     })(req, res, next);
   });
 
-  router.get('/google', passport.authenticate('google', {
-      // scope: 'profile'
-      scope: 'email'
-    }),
-    function(req, res) {
-      // The request will be redirected to Facebook for authentication, so this
-      // function will not be called.
+router.get('/google', passport.authenticate('google', {
+    // scope: 'profile'
+    scope: 'email'
+  }),
+  function(req, res) {
+    res.json('success')
+});
 
-      res.end('success')
-    });
 
-    router.get('/logout', function(req, res, next){
-      req.logout();
-      res.send('logged out')
-    })
+  router.get('/logout', function(req, res, next){
+    req.logout();
+    res.json({error: false, data: 'logged out'})
+  })
 
 
 
@@ -79,7 +82,4 @@ passport.use(new GoogleStrategy(
 
 
 
-module.exports = {
-  router: router,
-  passport: passport
-}
+module.exports = router

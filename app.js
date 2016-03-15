@@ -12,6 +12,7 @@ var players = require('./routes/players');
 var hosts = require('./routes/hosts');
 var questions = require('./routes/questions');
 var decks = require('./routes/decks');
+var auth = require('./routes/auth');
 
 var app = express();
 
@@ -34,6 +35,7 @@ app.use('/players', players);
 app.use('/hosts', hosts);
 app.use('/questions', questions);
 app.use('/decks', decks);
+app.use('/auth', auth);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
