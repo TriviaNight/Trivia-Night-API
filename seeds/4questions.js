@@ -15,7 +15,6 @@ exports.seed = function(knex, Promise) {
       correct_answer: 'D',
       catagory_id: 3,
       user_id: 1,
-      bullshit_rating: 0,
     }),
     knex('questions').insert({
       question: 'What is the Dude call his white russians?',
@@ -26,7 +25,6 @@ exports.seed = function(knex, Promise) {
       correct_answer: 'A',
       catagory_id: 3,
       user_id: 1,
-      bullshit_rating: 0,
     }),
     knex('questions').insert({
       question: "What is the Dude's real first name?",
@@ -38,7 +36,6 @@ exports.seed = function(knex, Promise) {
       correct_answer: 'E',
       catagory_id: 3,
       user_id: 1,
-      bullshit_rating: 0,
     })
   ]);
 };

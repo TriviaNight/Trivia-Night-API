@@ -14,7 +14,11 @@ exports.up = function(knex, Promise) {
     questions.string('correct_answer').notNullable();
     questions.integer('catagory_id').references('id').inTable('catagories').onDelete('cascade').notNullable();
     questions.integer('user_id').references('id').inTable('users').onDelete('cascade').notNullable();
-    questions.integer('bullshit_rating');
+  }).createTable('flags', function(flags){
+    flags.increments().primary();
+    flags.unique(['user_id','question_id']);
+    flags.integer('user_id').references('id').inTable('users').onDelete('cascade');
+    flags.integer('question_id').references('id').inTable('questions').onDelete('cascade');
   }).createTable('decks', function(decks){
     decks.increments().primary();
     decks.integer('user_id').references('id').inTable('users');

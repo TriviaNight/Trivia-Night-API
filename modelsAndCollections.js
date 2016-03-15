@@ -38,12 +38,15 @@ model.Host = Bookshelf.Model.extend({
 //model for questions
 model.Question = Bookshelf.Model.extend({
     tableName: 'questions',
-    catagories: function (){
+    catagory: function (){
       return this.belongsTo(model.Catagory);
     },
     decks: function (){
       return this.belongsToMany(model.Deck).through(model.DeckQuestion);
     },
+    flags: function (){
+      return this.hasMany(model.Flag);
+    }
 });
 
 //model for catagories
@@ -64,10 +67,20 @@ model.DeckQuestion = Bookshelf.Model.extend({
     tableName: 'deck_questions',
 });
 
+//model for flags
+model.Flag = Bookshelf.Model.extend({
+    tableName: 'flags'
+});
+
 //collection for getting all players
 model.Players = Bookshelf.Collection.extend({
   model: model.Player,
 });
+
+//collection for getting all questions
+model.Questions = Bookshelf.Collection.extend({
+  model: model.Question,
+})
 
 
 module.exports = model;
