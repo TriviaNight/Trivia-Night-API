@@ -15,7 +15,6 @@ passport.use(new GoogleStrategy(
     callbackURL: process.env.CALLBACK_URL
   },
   function(token, tokenSecret, profile, done) {
-    console.log(profile);
     var userProfile = {
       email: profile.emails[0].value,
       rating: 1000,
@@ -42,44 +41,39 @@ passport.use(new GoogleStrategy(
   }
 ));
 
-  router.get('/google/callback', function(req, res, next) {
-    passport.authenticate('google', function(err, user, info) {
-      if (err) {
-        next(err);
-      } else if (user) {
+router.get('/google/callback', function(req, res, next) {
+  passport.authenticate('google', function(err, user, info) {
+    if (err) {
+      next(err);
+    } else if (user) {
 
-        // create token
-        var token = jwt.sign(user, process.env.JWT_SECRET, {
-          expiresIn:15778463,
-        })
-        var authUrl = process.env.OAUTH_REDIRECT_URL +token;
-        res.redirect(authUrl);
+      // create token
+      var token = jwt.sign(user, process.env.JWT_SECRET, {
+        expiresIn:15778463,
+      });
 
-      } else if (info) {
-        next(info);
-      }
-    })(req, res, next);
-  });
+      //set return URL
+      var authUrl = process.env.OAUTH_REDIRECT_URL +token;
+      res.redirect(authUrl);
+
+    } else if (info) {
+      next(info);
+    }
+  })(req, res, next);
+});
 
 router.get('/google', passport.authenticate('google', {
-    // scope: 'profile'
     scope: 'email'
   }),
   function(req, res) {
-    res.json('success')
+    res.json({error: false, data:'success'});
 });
 
 
-  router.get('/logout', function(req, res, next){
-    req.logout();
-    res.json({error: false, data: 'logged out'})
-  })
+router.get('/logout', function(req, res, next){
+  req.logout();
+  res.json({error: false, data: 'logged out'});
+});
 
 
-
-
-
-
-
-
-module.exports = router
+module.exports = router;
