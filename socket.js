@@ -1,5 +1,6 @@
 var Socket = require('socket.io');
 var jwt = require('jsonwebtoken');
+var knex = require('./db/knex');
 
 
 //array of active games
@@ -19,16 +20,27 @@ module.exports=function(server){
       if(gameExist){
         socket.emit('message', 'Game already exist');
       }
-      //else create the game in memory and make a room for it
+      //else create the game in memory add to database
       else{
-        game.players = {};
-        game.rounds = [];
-        game.activeRound = 1;
-        games.push(game);
-        socket.join(game.name);
-        setInterval(function(){
-          io.in(game.name).emit('message', 'hello there from game room');
-        }, 3000);
+        var gameModel = {
+          host_id: game.hostID,
+          round_length_in_seconds: game.questionTime,
+          name: game.name,
+          password: game.password,
+          number_of_rounds: game.numberOfRounds,
+        };
+        knex('games').insert(gameModel, 'id').then(function(id){
+
+          game.id = id[0];
+          game.players = {};
+          game.rounds = [];
+          game.activeRound = 1;
+          games.push(game);
+          socket.join(game.name);
+          setInterval(function(){
+            io.in(game.name).emit('message', 'hello there from game room');
+          }, 3000);
+        });
       }
     });
 
@@ -40,24 +52,27 @@ module.exports=function(server){
         //ensure the game passwords match
         var matchedPasswords = CompareToActiveGames(user, 'password');
         if(matchedPasswords){
-          //join the game channel
-          socket.join(user.name);
-          //get the game object
           var hostGame = returnGameObject(user, 'name');
-          //add the user to game object and set score to zero
-          if(!hostGame.players[user.userID]){
-            hostGame.players[user.userID] = {};
-            hostGame.players[user.userID].imgURL = user.imgURL;
-            hostGame.players[user.userID].username = user.username;
-            hostGame.players[user.userID].score = 0;
-            hostGame.players[user.userID].answers = [];
+          //join the game channel
+          knex('game_users').insert({game_id: hostGame.id, user_id: user.userID}).then(function(){
+            socket.join(user.name);
+            //get the game object
+            var hostGame = returnGameObject(user, 'name');
+            //add the user to game object and set score to zero
+            if(!hostGame.players[user.userID]){
+              hostGame.players[user.userID] = {};
+              hostGame.players[user.userID].imgURL = user.imgURL;
+              hostGame.players[user.userID].username = user.username;
+              hostGame.players[user.userID].score = 0;
+              hostGame.players[user.userID].answers = [];
 
-          }
-          //set and emit the game token
-          var token = jwt.sign(user, process.env.JWT_SECRET, {
-            expiresIn:15778463,
+            }
+            //set and emit the game token
+            var token = jwt.sign(user, process.env.JWT_SECRET, {
+              expiresIn:15778463,
+            });
+            socket.emit('gameToken', token);
           });
-          socket.emit('gameToken', token);
         }else{
           //incorrect password
           socket.emit('message', 'incorrect password.');
@@ -73,26 +88,50 @@ module.exports=function(server){
       var isHost = CompareToActiveGames(question, 'hostID');
       if(isHost){
         var hostGame = returnGameObject(question, 'hostID');
-
-        hostGame.rounds[question.content.round-1] = question;
-        io.in(hostGame.name).emit('question', question.content);
+        knex('rounds').insert({game_id: hostGame.id, round_number: hostGame.activeRound, question_id: question.id},'id').then(function(id){
+          question.roundID = id[0];
+          hostGame.rounds[hostGame.activeRound-1] = question;
+          io.in(hostGame.name).emit('question', question.content);
+        });
       }else{
         socket.emit('message', 'You are not currently hosting a game');
       }
       //set timeout ends the round
+      var timeout = hostGame.questionTime*1000;
       setTimeout(function(){
         //update scores
         for(var key in hostGame.players){
+          //update database and game scores
           if(hostGame.rounds[hostGame.activeRound-1].correctAnswer===hostGame.players[key].answers[hostGame.activeRound-1]){
-            hostGame.players[key].score++;
+            knex('user_responses').insert({user_id: key, correct_answer: true, round_id: hostGame.rounds[hostGame.activeRound-1].roundID}).then(function(data){
+              console.log(data);
+              hostGame.players[key].score++;
+            });
+          }else{
+            knex('user_responses').insert({user_id: key, correct_answer: false, round_id: hostGame.rounds[hostGame.activeRound-1].roundID}).then(function(data){
+              console.log(data);
+            });
           }
         }
-        //update database
-
+        //check to see if
         //send user scores
         hostGame.activeRound++;
+        if(hostedGame.activeRound>hostedGame.numberOfRounds){
+          var winnerId;
+          var currentBestScore=0;
+          for(var key2 in hostedGame.players){
+            if(hostGame.players[key2].score > currentBestScore){
+              currentBestScore = hostGame.players[key2].score;
+              winnerId = key2;
+            }
+          }
+          knex('games').update({winner_id: winnerId}).where('id', hostedGame.id).then(function(){
+            io.in(hostGame.name).emit('game over', hostGame.players);
+          });
+
+        }
         io.in(hostGame.name).emit('round over', hostGame.players);
-      }, hostGame.questionTime);
+      }, timeout);
     });
 
     //player submits and answer to a question
