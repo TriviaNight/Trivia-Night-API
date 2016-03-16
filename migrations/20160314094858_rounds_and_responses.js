@@ -11,7 +11,7 @@ exports.up = function(knex, Promise) {
     user_responses.integer('round_id').references('id').inTable('rounds').onDelete('cascade');
     user_responses.boolean('correct_answer');
     user_responses.timestamp('played_on').defaultTo(knex.fn.now());
-  })
+  });
 };
 
 exports.down = function(knex, Promise) {
