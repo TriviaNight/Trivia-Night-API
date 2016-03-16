@@ -25,7 +25,7 @@ exports.up = function(knex, Promise) {
     decks.string('name');
   }).createTable('deck_questions', function(deckQuestions){
     deckQuestions.increments();
-    deckQuestions.integer('user_id').references('id').inTable('users').onDelete('cascade');
+    deckQuestions.integer('question_id').references('id').inTable('question').onDelete('cascade');
     deckQuestions.integer('deck_id').references('id').inTable('decks').onDelete('cascade');
   });
 };

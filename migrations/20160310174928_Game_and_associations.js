@@ -5,6 +5,7 @@ exports.up = function(knex, Promise) {
     games.integer('host_id').references('id').inTable('users').onDelete('cascade').notNullable();
     games.integer('winner_id').references('id').inTable('users').onDelete('cascade');
     games.integer('round_length_in_seconds').notNullable();
+    games.integer('number_of_rounds').notNullable();
     games.string('name').notNullable();
     games.string('password').notNullable();
     games.timestamp('played_on').defaultTo(knex.fn.now());
