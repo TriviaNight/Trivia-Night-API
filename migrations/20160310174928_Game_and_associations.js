@@ -11,7 +11,7 @@ exports.up = function(knex, Promise) {
     games.timestamp('played_on').defaultTo(knex.fn.now());
   }).createTable('game_decks', function(gameDecks){
     gameDecks.increments();
-    gameUsers.unique(['game_id', 'deck_id']);
+    gameDecks.unique(['game_id', 'deck_id']);
     gameDecks.integer('game_id').references('id').inTable('games').onDelete('cascade');
     gameDecks.integer('deck_id').references('id').inTable('decks').onDelete('cascade');
   }).createTable('game_users', function(gameUsers){

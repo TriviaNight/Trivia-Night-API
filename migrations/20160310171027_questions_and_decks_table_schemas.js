@@ -25,11 +25,11 @@ exports.up = function(knex, Promise) {
     decks.string('name');
   }).createTable('deck_questions', function(deckQuestions){
     deckQuestions.increments();
-    deckQuestions.integer('question_id').references('id').inTable('question').onDelete('cascade');
+    deckQuestions.integer('question_id').references('id').inTable('questions').onDelete('cascade');
     deckQuestions.integer('deck_id').references('id').inTable('decks').onDelete('cascade');
   });
 };
 
 exports.down = function(knex, Promise) {
-  return knex.schema.dropTable('deck_questions').dropTable('decks').dropTable('questions').dropTable('catagories');
+  return knex.schema.dropTable('deck_questions').dropTable('decks').dropTable('flags').dropTable('questions').dropTable('catagories');
 };
