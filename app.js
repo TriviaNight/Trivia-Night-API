@@ -5,6 +5,7 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var jwt = require('jsonwebtoken');
+var cors = require('cors');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
@@ -29,6 +30,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(cors());
 
 app.use('/', routes);
 app.use('/users', users);
@@ -37,7 +39,7 @@ app.use('/players', tokenAuthenicated, players);
 app.use('/hosts', tokenAuthenicated, hosts);
 app.use('/questions', tokenAuthenicated, questions);
 app.use('/decks', tokenAuthenicated, decks);
-app.use('/games', tokenAuthenicated, games)
+app.use('/games', tokenAuthenicated, games);
 app.use('/auth', auth);
 
 // catch 404 and forward to error handler
@@ -89,7 +91,6 @@ function tokenAuthenicated(req, res, next){
      }
    });
   } else {
-
    // if there is no token
    // return an error
    return res.status(403).json({

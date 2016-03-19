@@ -9,6 +9,7 @@ var games = [];
 module.exports=function(server){
   var io = Socket(server);
   io.on('connection', function(socket){
+    console.log('we have a connection')
     socket.emit('message', 'welcome to socket channel');
 
     //host creates a game;
@@ -23,7 +24,7 @@ module.exports=function(server){
       //else create the game in memory add to database
       else{
         var gameModel = {
-          host_id: game.hostID,
+          host_id: game.host_id,
           round_length_in_seconds: game.questionTime,
           name: game.name,
           password: game.password,
@@ -85,54 +86,67 @@ module.exports=function(server){
 
     //host begins a round with a timer and ask question
     socket.on('ask question', function(question){
-      var isHost = CompareToActiveGames(question, 'hostID');
+      question.host_id = question.user_id
+      var isHost = CompareToActiveGames(question, 'host_id');
       if(isHost){
-        var hostGame = returnGameObject(question, 'hostID');
+        var hostGame = returnGameObject(question, 'host_id');
         knex('rounds').insert({game_id: hostGame.id, round_number: hostGame.activeRound, question_id: question.id},'id').then(function(id){
           question.roundID = id[0];
           hostGame.rounds[hostGame.activeRound-1] = question;
-          io.in(hostGame.name).emit('question', question.content);
+          var content = {
+            choice: {},
+            question: question.question
+          }
+          content.choice.A = question.response_a;
+          content.choice.B = question.response_b;
+          content.choice.C = question.response_c;
+          content.choice.D = question.response_d;
+          content.choice.E = question.response_e;
+          io.in(hostGame.name).emit('question', content);
         });
+        //set timeout ends the round
+        var timeout = hostGame.questionTime*1000;
+        setTimeout(function(){
+          //update scores
+          for(var key in hostGame.players){
+            //update database and game scores
+            if(hostGame.rounds[hostGame.activeRound-1].correctAnswer===hostGame.players[key].answers[hostGame.activeRound-1]){
+              hostGame.players[key].score++;
+              knex('user_responses').insert({user_id: key, correct_answer: true, round_id: hostGame.rounds[hostGame.activeRound-1].roundID}).then(function(data){
+                console.log(data);
+              });
+            }else{
+              knex('user_responses').insert({user_id: key, correct_answer: false, round_id: hostGame.rounds[hostGame.activeRound-1].roundID}).then(function(data){
+                console.log(data);
+              });
+            }
+          }
+          //check to see if
+          //send user scores
+          hostGame.activeRound++;
+          if(hostGame.activeRound>hostGame.numberOfRounds){
+            var winnerId;
+            var currentBestScore=0;
+            for(var key2 in hostGame.players){
+              if(hostGame.players[key2].score > currentBestScore){
+                currentBestScore = hostGame.players[key2].score;
+                winnerId = key2;
+              }
+            }
+
+            knex('games').update({winner_id: winnerId}).where('id', hostGame.id).then(function(){
+              removeGame(hostGame);
+              io.in(hostGame.name).emit('game over', hostGame.players);
+            });
+
+          }else{
+            io.in(hostGame.name).emit('round over', hostGame.players);
+          }
+        }, timeout);
       }else{
         socket.emit('message', 'You are not currently hosting a game');
       }
-      //set timeout ends the round
-      var timeout = hostGame.questionTime*1000;
-      setTimeout(function(){
-        //update scores
-        for(var key in hostGame.players){
-          //update database and game scores
-          if(hostGame.rounds[hostGame.activeRound-1].correctAnswer===hostGame.players[key].answers[hostGame.activeRound-1]){
-            knex('user_responses').insert({user_id: key, correct_answer: true, round_id: hostGame.rounds[hostGame.activeRound-1].roundID}).then(function(data){
-              console.log(data);
-              hostGame.players[key].score++;
-            });
-          }else{
-            knex('user_responses').insert({user_id: key, correct_answer: false, round_id: hostGame.rounds[hostGame.activeRound-1].roundID}).then(function(data){
-              console.log(data);
-            });
-          }
-        }
-        //check to see if
-        //send user scores
-        hostGame.activeRound++;
-        if(hostedGame.activeRound>hostedGame.numberOfRounds){
-          var winnerId;
-          var currentBestScore=0;
-          for(var key2 in hostedGame.players){
-            if(hostGame.players[key2].score > currentBestScore){
-              currentBestScore = hostGame.players[key2].score;
-              winnerId = key2;
-            }
-          }
-          knex('games').update({winner_id: winnerId}).where('id', hostedGame.id).then(function(){
-            io.in(hostGame.name).emit('game over', hostGame.players);
-          });
-
-        }
-        io.in(hostGame.name).emit('round over', hostGame.players);
-      }, timeout);
-    });
+  });
 
     //player submits and answer to a question
     socket.on('answer', function(userResponse){
@@ -172,4 +186,12 @@ function returnGameObject(game, comparison){
     }
   });
   return gameObject;
+}
+
+function removeGame(game){
+  games.forEach(function(hostedGame, i, games){
+    if(game.name===hostedGame.name){
+      games.splice(i, 1);
+    }
+  });
 }
