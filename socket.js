@@ -24,7 +24,7 @@ module.exports=function(server){
       //else create the game in memory add to database
       else{
         var gameModel = {
-          host_id: game.host_id,
+          user_id: game.host_id,
           round_length_in_seconds: game.questionTime,
           name: game.name,
           password: game.password,

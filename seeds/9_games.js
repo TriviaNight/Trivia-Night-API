@@ -5,6 +5,6 @@ exports.seed = function(knex, Promise) {
     knex('games').del(),
 
     // Inserts seed entries
-    knex('games').insert({host_id: 1, round_length_in_seconds: 10, number_of_rounds: 5, name: 'Thursday night triva night', password: 'password'}),
+    knex('games').insert({user_id: 1, round_length_in_seconds: 10, number_of_rounds: 5, name: 'Thursday night triva night', password: 'password'}),
   ]);
 };

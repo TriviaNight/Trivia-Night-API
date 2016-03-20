@@ -2,7 +2,7 @@
 exports.up = function(knex, Promise) {
   return knex.schema.createTable('games', function(games){
     games.increments().primary();
-    games.integer('host_id').references('id').inTable('users').onDelete('cascade').notNullable();
+    games.integer('user_id').references('id').inTable('users').onDelete('cascade').notNullable();
     games.integer('winner_id').references('id').inTable('users').onDelete('cascade');
     games.integer('round_length_in_seconds').notNullable();
     games.integer('number_of_rounds').notNullable();
