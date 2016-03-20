@@ -5,10 +5,10 @@ var models = require('../modelsAndCollections');
 var Bookshelf = require('bookshelf')(knex);
 
 //get host by ID
-router.get('/:id', function(req, res, next) {
+router.get('/', function(req, res, next) {
   console.log('getting host')
   console.log(req.decoded);
-  models.Host.forge({id: req.params.id}).fetch({withRelated: ['decks', 'decks.questions', 'questions', 'questions.catagory', 'questions.userResponses']}).then(function(host){
+  models.Host.forge({id: req.decoded.id}).fetch({withRelated: ['decks', 'decks.questions', 'questions', 'questions.catagory', 'questions.userResponses']}).then(function(host){
     if(!host){
       res.status(404).json({error: true, data:'user not found'});
     }else{
