@@ -110,7 +110,7 @@ module.exports=function(server){
           //update scores
           for(var key in hostGame.players){
             //update database and game scores
-            if(hostGame.rounds[hostGame.activeRound-1].correctAnswer===hostGame.players[key].answers[hostGame.activeRound-1]){
+            if(hostGame.rounds[hostGame.activeRound-1].correct_answer===hostGame.players[key].answers[hostGame.activeRound-1]){
               hostGame.players[key].score++;
               knex('user_responses').insert({user_id: key, correct_answer: true, round_id: hostGame.rounds[hostGame.activeRound-1].roundID}).then(function(data){
                 console.log(data);
