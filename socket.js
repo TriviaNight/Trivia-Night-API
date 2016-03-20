@@ -102,7 +102,7 @@ module.exports=function(server){
           content.choice.C = question.response_c;
           content.choice.D = question.response_d;
           content.choice.E = question.response_e;
-          content.round = hostGame.activeRound-1;
+          content.round = hostGame.activeRound;
           io.in(hostGame.name).emit('question', content);
         });
         //set timeout ends the round
