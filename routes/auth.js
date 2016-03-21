@@ -134,6 +134,6 @@ var mobileStrategy = new GoogleStrategy(
         done(error, null);
       });
   }
-));
+);
 
 module.exports = router;
