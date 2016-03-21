@@ -13,7 +13,7 @@ var userBadges = require('./routes/userBadges');
 var players = require('./routes/players');
 var hosts = require('./routes/hosts');
 var questions = require('./routes/questions');
-var decks = require('./routes/decks');
+var catagories = require('./routes/catagories');
 var auth = require('./routes/auth');
 var games = require('./routes/games');
 
@@ -38,7 +38,7 @@ app.use('/users/badges', userBadges);
 app.use('/players', tokenAuthenicated, players);
 app.use('/hosts', tokenAuthenicated, hosts);
 app.use('/questions', tokenAuthenicated, questions);
-app.use('/decks', tokenAuthenicated, decks);
+app.use('/catagories', tokenAuthenicated, catagories);
 app.use('/games', tokenAuthenicated, games);
 app.use('/auth', auth);
 
