@@ -21,6 +21,26 @@ router.get('/flags', function(req, res, next){
   });
 });
 
+router.post('/', function(req, res, next){
+  var question = {
+    question: req.body.question,
+    response_a: req.body.choice_a,
+    response_b: req.body.choice_b,
+    response_c: req.body.choice_c,
+    response_d: req.body.choice_d,
+    response_e: req.body.choice_e,
+    correct_answer: req.body.correct_answer,
+    catagory_id: req.body.catagory_id,
+    user_id: req.body.user_id,
+  }
+  knex('questions').insert(question, 'id').then(function(id){
+    question.id = id[0];
+    res.status(200).json({error: false, data: question});
+  }).catch(function(error){
+    res.status(500).json({error: true, data: error});
+  });
+});
+
 router.post('/flags/:questionId', function(req, res, next){
   var tempuser = 2;
   var flag = {

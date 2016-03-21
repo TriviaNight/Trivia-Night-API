@@ -8,9 +8,9 @@ exports.up = function(knex, Promise) {
     questions.string('question').notNullable();
     questions.string('response_a').notNullable();
     questions.string('response_b').notNullable();
-    questions.string('response_c');
-    questions.string('response_d');
-    questions.string('response_e');
+    questions.string('response_c').notNullable();
+    questions.string('response_d').notNullable();
+    questions.string('response_e').notNullable();
     questions.string('correct_answer').notNullable();
     questions.integer('catagory_id').references('id').inTable('catagories').onDelete('cascade').notNullable();
     questions.integer('user_id').references('id').inTable('users').onDelete('cascade').notNullable();
