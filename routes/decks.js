@@ -25,7 +25,7 @@ router.delete('/:deckid', function(req, res, next) {
   });
 });
 
-router.update('questions/:deckid', function(req, res, next) {
+router.put('questions/:deckid', function(req, res, next) {
   if(req.decoded.id == req.body.hostid){
     var questionsInsert = []
     req.body.questions.forEach(function(question){
