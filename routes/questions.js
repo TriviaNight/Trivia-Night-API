@@ -22,6 +22,7 @@ router.get('/flags', function(req, res, next){
 });
 
 router.post('/', function(req, res, next){
+  console.log('in route');
   var question = {
     question: req.body.question,
     response_a: req.body.choice_a,
@@ -32,7 +33,7 @@ router.post('/', function(req, res, next){
     correct_answer: req.body.correct_answer,
     catagory_id: req.body.catagory.id,
     user_id: req.body.user_id,
-  }
+  };
   knex('questions').insert(question, 'id').then(function(id){
     question.catagory = req.body.catagory;
     question.id = id[0];
