@@ -25,7 +25,8 @@ router.delete('/:deckid', function(req, res, next) {
   });
 });
 
-router.put('questions/:deckid', function(req, res, next) {
+router.put('/questions/:deckid', function(req, res, next) {
+  console.log('in here')
   if(req.decoded.id == req.body.hostid){
     var questionsInsert = []
     req.body.questions.forEach(function(question){
@@ -38,7 +39,7 @@ router.put('questions/:deckid', function(req, res, next) {
     knex('deck_questions').delete().where('deck_id', req.params.deckid).then(function(){
       knex('deck_questions').insert(questionsInsert, 'id').where('deck_id', req.params.deckid).then(function(id){
         console.log(id);
-        res.status(204).json({eror: false, data:'success'});
+        res.status(200).json({eror: false, data:'success'});
       }).catch(function(error){
         res.status(500).json({error: true, data: error});
     }).catch(function(error){
