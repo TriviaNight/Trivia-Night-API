@@ -16,6 +16,7 @@ var questions = require('./routes/questions');
 var catagories = require('./routes/catagories');
 var auth = require('./routes/auth');
 var games = require('./routes/games');
+var decks =  require('./routes/decks');
 
 var app = express();
 
@@ -40,7 +41,9 @@ app.use('/hosts', tokenAuthenicated, hosts);
 app.use('/questions', tokenAuthenicated, questions);
 app.use('/catagories', tokenAuthenicated, catagories);
 app.use('/games', tokenAuthenicated, games);
+app.use('/decks', tokenAuthenicated, decks);
 app.use('/auth', auth);
+app.use('/decks', decks);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

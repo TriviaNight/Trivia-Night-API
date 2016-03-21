@@ -4,7 +4,7 @@ var knex = require('../db/knex');
 var models = require('../modelsAndCollections');
 var Bookshelf = require('bookshelf')(knex);
 
-router.post('/createDeck', function(req, res, next) {
+router.post('/createdeck', function(req, res, next) {
   var deck = {
     name: req.body.name,
     user_id: req.body.user_id,
