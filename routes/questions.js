@@ -31,11 +31,10 @@ router.post('/', function(req, res, next){
     response_d: req.body.choice_d,
     response_e: req.body.choice_e,
     correct_answer: req.body.correct_answer,
-    catagory_id: req.body.catagory.id,
+    catagory_id: req.body.catagory_id,
     user_id: req.body.user_id,
   };
   knex('questions').insert(question, 'id').then(function(id){
-    question.catagory = req.body.catagory;
     question.id = id[0];
     res.status(200).json({error: false, data: question});
   }).catch(function(error){
