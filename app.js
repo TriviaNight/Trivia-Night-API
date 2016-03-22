@@ -34,7 +34,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
 
 app.use('/', routes);
-app.use('/users', users);
+app.use('/users', tokenAuthenicated, users);
 app.use('/users/badges', userBadges);
 app.use('/players', tokenAuthenicated, players);
 app.use('/hosts', tokenAuthenicated, hosts);
