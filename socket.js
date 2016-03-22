@@ -56,25 +56,39 @@ module.exports=function(server){
         if(matchedPasswords){
           var hostGame = returnGameObject(user, 'name');
           //join the game channel
-          knex('game_users').insert({game_id: hostGame.id, user_id: user.userID}).then(function(){
-            socket.join(user.name);
-            //get the game object
-            var hostGame = returnGameObject(user, 'name');
-            //add the user to game object and set score to zero
-            if(!hostGame.players[user.userID]){
-              hostGame.players[user.userID] = {};
-              hostGame.players[user.userID].imgURL = user.imgURL;
-              hostGame.players[user.userID].username = user.username;
-              hostGame.players[user.userID].score = 0;
-              hostGame.players[user.userID].answers = [];
+          knex('game_users').select().where({game_id: hostGame.id, user_id: user.userID}).then(function(previousUser){
+            if(previousUser){
+              socket.join(user.name);
+              //get the game object
+              var hostGame = returnGameObject(user, 'name');
+              //add the user to game object and set score to zero
+              //set and emit the game token
+              var token = jwt.sign(user, process.env.JWT_SECRET, {
+                expiresIn:15778463,
+              });
+              socket.emit('gameToken', token);
+            }else{
+              knex('game_users').insert({game_id: hostGame.id, user_id: user.userID}).then(function(){
+                socket.join(user.name);
+                //get the game object
+                var hostGame = returnGameObject(user, 'name');
+                //add the user to game object and set score to zero
+                if(!hostGame.players[user.userID]){
+                  hostGame.players[user.userID] = {};
+                  hostGame.players[user.userID].imgURL = user.imgURL;
+                  hostGame.players[user.userID].username = user.username;
+                  hostGame.players[user.userID].score = 0;
+                  hostGame.players[user.userID].answers = [];
 
+                }
+                //set and emit the game token
+                var token = jwt.sign(user, process.env.JWT_SECRET, {
+                  expiresIn:15778463,
+                });
+                socket.emit('gameToken', token);
+              });
             }
-            //set and emit the game token
-            var token = jwt.sign(user, process.env.JWT_SECRET, {
-              expiresIn:15778463,
-            });
-            socket.emit('gameToken', token);
-          });
+          })
         }else{
           //incorrect password
           socket.emit('fail', 'incorrect password.');
