@@ -9,7 +9,7 @@ var games = [];
 module.exports=function(server){
   var io = Socket(server);
   io.on('connection', function(socket){
-    console.log('we have a connection')
+    console.log('we have a connection');
     socket.emit('message', 'welcome to socket channel');
 
     //host creates a game;
@@ -38,7 +38,7 @@ module.exports=function(server){
           game.activeRound = 1;
           games.push(game);
           socket.join(game.name);
-          socket.emit('created game', 'success');
+          socket.emit('createdGame', 'success');
           setInterval(function(){
             io.in(game.name).emit('message', 'hello there from game room');
           }, 3000);
