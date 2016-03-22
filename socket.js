@@ -63,6 +63,14 @@ module.exports=function(server){
               var hostGame = returnGameObject(user, 'name');
               //add the user to game object and set score to zero
               //set and emit the game token
+              if(!hostGame.players[user.userID]){
+                hostGame.players[user.userID] = {};
+                hostGame.players[user.userID].imgURL = user.imgURL;
+                hostGame.players[user.userID].username = user.username;
+                hostGame.players[user.userID].score = 0;
+                hostGame.players[user.userID].answers = [];
+
+              }
               var token = jwt.sign(user, process.env.JWT_SECRET, {
                 expiresIn:15778463,
               });
