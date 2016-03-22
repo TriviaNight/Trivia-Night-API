@@ -147,6 +147,7 @@ module.exports=function(server){
           }
           //check to see if
           //send user scores
+
           hostGame.activeRound++;
           if(hostGame.activeRound>hostGame.numberOfRounds){
             console.log('game ending')
@@ -167,7 +168,11 @@ module.exports=function(server){
             });
 
           }else{
-            io.in(hostGame.name).emit('round over', hostGame.players);
+            var gameState = {
+              players: hostGame.players,
+              answer: hostGame.rounds[hostGame.activeRound-2].correct_answer,
+            }
+            io.in(hostGame.name).emit('round over', gameState);
           }
         }, timeout);
       }else{
