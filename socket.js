@@ -127,6 +127,7 @@ module.exports=function(server){
           //send user scores
           hostGame.activeRound++;
           if(hostGame.activeRound>hostGame.numberOfRounds){
+            console.log('game ending')
             var winnerId;
             var currentBestScore=0;
             for(var key2 in hostGame.players){
@@ -135,9 +136,11 @@ module.exports=function(server){
                 winnerId = key2;
               }
             }
-
+            console.log(winnerId);
             knex('games').update({winner_id: winnerId}).where('id', hostGame.id).then(function(){
               removeGame(hostGame);
+              io.in(hostGame.name).emit('game over', hostGame.players);
+            }).catch(function(error){
               io.in(hostGame.name).emit('game over', hostGame.players);
             });
 
