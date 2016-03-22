@@ -19,7 +19,7 @@ module.exports=function(server){
 
       //if game exist let creator know game exist
       if(gameExist){
-        socket.emit('message', 'Game already exist');
+        socket.emit('fail', 'Game already exist');
       }
       //else create the game in memory add to database
       else{
@@ -38,6 +38,7 @@ module.exports=function(server){
           game.activeRound = 1;
           games.push(game);
           socket.join(game.name);
+          socket.emit('created game', 'success');
           setInterval(function(){
             io.in(game.name).emit('message', 'hello there from game room');
           }, 3000);
