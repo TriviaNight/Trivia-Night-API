@@ -28,6 +28,14 @@ router.get('/', function(req, res, next) {
   });
 });
 
+router.patch('/username', function(req, res, next){
+  knex('users').where('id', req.decoded.id).update({username: req.body.username}).then(function(update){
+    res.status(200).json({error: false, data: users});
+  }).catch(function(error){
+    res.status(500).json({error: true, data: error});
+  });
+});
+
 
 
 module.exports = router;
