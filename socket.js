@@ -76,11 +76,11 @@ module.exports=function(server){
           });
         }else{
           //incorrect password
-          socket.emit('message', 'incorrect password.');
+          socket.emit('fail', 'incorrect password.');
         }
       }else{
         //couldn't find game in game array
-        socket.emit('message', 'incorrect game name.');
+        socket.emit('fail', 'incorrect game name.');
       }
     });
 
