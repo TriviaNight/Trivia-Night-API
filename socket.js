@@ -134,8 +134,11 @@ module.exports=function(server){
           //update scores
           for(var key in hostGame.players){
             //update database and game scores
-            if(hostGame.rounds[hostGame.activeRound-1].correct_answer===hostGame.players[key].answers[hostGame.activeRound-1]){
-              hostGame.players[key].score++;
+            if(hostGame.rounds[hostGame.activeRound-1].correct_answer===hostGame.players[key].answers[hostGame.activeRound-1].choice){
+              var elapsedSec = (Date.now()-hostGame.players[key].answers[hostGame.activeRound-1].time)/1000
+              var incrementer = (hostGame.questionTime/10)
+              var bonusScore = Math.floor(elapsedSec/incrementer)*10
+              hostGame.players[key].score += 100 + bonusScore;
               knex('user_responses').insert({user_id: key, correct_answer: true, round_id: hostGame.rounds[hostGame.activeRound-1].roundID}).then(function(data){
                 console.log(data);
               });
@@ -172,7 +175,8 @@ module.exports=function(server){
               players: hostGame.players,
               answer: hostGame.rounds[hostGame.activeRound-2].correct_answer,
             }
-            io.in(hostGame.name).emit('round over', gameState);
+            io.in(hostGame.name).emit('round over', gameState
+          );
           }
         }, timeout);
       }else{
@@ -184,8 +188,12 @@ module.exports=function(server){
     socket.on('answer', function(userResponse){
 
       var hostGame = returnGameObject(userResponse, 'name');
+      var response = {
+        choice: userResponse.response,
+        time: Date.now(),
+      }
       if(userResponse.round === hostGame.activeRound){
-        hostGame.players[userResponse.userID].answers[userResponse.round-1] = userResponse.response;
+        hostGame.players[userResponse.userID].answers[userResponse.round-1] = response;
         io.in(hostGame.name).emit('message', 'user submitted an answer');
       }else{
         socket.emit('message', 'This is not the active round');
