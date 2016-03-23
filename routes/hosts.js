@@ -8,7 +8,7 @@ var Bookshelf = require('bookshelf')(knex);
 router.get('/', function(req, res, next) {
   console.log('getting host');
   console.log(req.decoded);
-  models.Host.forge({id: req.decoded.id}).fetch({withRelated: ['decks', 'decks.questions','decks.questions.catagory','questions', 'questions.catagory', 'questions.userResponses', 'games']}).then(function(host){
+  models.Host.forge({id: req.decoded.id}).fetch({withRelated: ['decks', 'decks.questions','decks.questions.catagory','questions', 'questions.catagory', 'questions.userResponses', 'games', 'games.decks']}).then(function(host){
     if(!host){
       res.status(404).json({error: true, data:'user not found'});
     }else{

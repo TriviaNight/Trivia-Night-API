@@ -41,6 +41,9 @@ model.Game = Bookshelf.Model.extend({
     },
     rounds: function (){
       return this.hasMany(model.Round);
+    },
+    decks: function(){
+      return this.belongsToMany(model.Deck).through(model.GameDeck)
     }
 
 });
@@ -92,6 +95,9 @@ model.DeckQuestion = Bookshelf.Model.extend({
     tableName: 'deck_questions',
 });
 
+model.GameDeck = Bookshelf.Model.extend({
+    tableName: 'game_decks',
+});
 //model for flags
 model.Flag = Bookshelf.Model.extend({
     tableName: 'flags',
