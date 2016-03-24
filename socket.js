@@ -134,19 +134,25 @@ module.exports=function(server){
           //update scores
           for(var key in hostGame.players){
             //update database and game scores
-            if(hostGame.rounds[hostGame.activeRound-1].correct_answer===hostGame.players[key].answers[hostGame.activeRound-1].choice){
-              var elapsedSec = (Date.now()-hostGame.players[key].answers[hostGame.activeRound-1].time)/1000
-              var incrementer = (hostGame.questionTime/10)
-              var bonusScore = Math.floor(elapsedSec/incrementer)*10
-              hostGame.players[key].score += 100 + bonusScore;
-              knex('user_responses').insert({user_id: key, correct_answer: true, round_id: hostGame.rounds[hostGame.activeRound-1].roundID}).then(function(data){
-                console.log(data);
-              });
+            if(hostGame.players[key].answers[hostGame.activeRound-1].choice){
+              if(hostGame.rounds[hostGame.activeRound-1].correct_answer===hostGame.players[key].answers[hostGame.activeRound-1].choice){
+                var elapsedSec = (Date.now()-hostGame.players[key].answers[hostGame.activeRound-1].time)/1000
+                var incrementer = (hostGame.questionTime/10)
+                var bonusScore = Math.floor(elapsedSec/incrementer)*10
+                hostGame.players[key].score += 100 + bonusScore;
+                knex('user_responses').insert({user_id: key, correct_answer: true, round_id: hostGame.rounds[hostGame.activeRound-1].roundID}).then(function(data){
+                  console.log(data);
+                });
+              }else{
+                knex('user_responses').insert({user_id: key, correct_answer: false, round_id: hostGame.rounds[hostGame.activeRound-1].roundID}).then(function(data){
+                  console.log(data);
+                });
+              }
             }else{
               knex('user_responses').insert({user_id: key, correct_answer: false, round_id: hostGame.rounds[hostGame.activeRound-1].roundID}).then(function(data){
                 console.log(data);
               });
-            }
+            }  
           }
           //check to see if
           //send user scores
