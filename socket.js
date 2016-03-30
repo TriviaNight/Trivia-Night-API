@@ -6,11 +6,12 @@ var knex = require('./db/knex');
 //array of active games
 var games = [];
 
+
+//export socket connection
 module.exports=function(server){
+  //create socket
   var io = Socket(server);
   io.on('connection', function(socket){
-    console.log('we have a connection');
-    socket.emit('message', 'welcome to socket channel');
 
     //host creates a game;
     socket.on('createGame', function(game){
@@ -21,7 +22,7 @@ module.exports=function(server){
       if(gameExist){
         socket.emit('fail', 'Game already exist');
       }
-      //else create the game in memory add to database
+      //else create the game in memory
       else{
         var gameModel = {
           user_id: game.host_id,
@@ -30,75 +31,52 @@ module.exports=function(server){
           password: game.password,
           number_of_rounds: game.numberOfRounds,
         };
+        //add to database
         knex('games').insert(gameModel, 'id').then(function(id){
 
+        //create game settings
           game.id = id[0];
           game.players = {};
           game.rounds = [];
           game.activeRound = 1;
+
+        //add to active game array
           games.push(game);
+        // create and join the specific game channel
           socket.join(game.name);
           socket.emit('createdGame', 'success');
-          setInterval(function(){
-            io.in(game.name).emit('message', 'hello there from game room');
-          }, 3000);
         });
       }
     });
 
+
+
+
+
     //player joins a game
     socket.on('joinGame', function(user){
-      //find game form array of active games
-      var foundGame = CompareToActiveGames(user, 'name');
-      if(foundGame){
+      //get game state
+      var hostGame = returnGameObject(user, 'name');
+      if(hostGame){
         //ensure the game passwords match
-        var matchedPasswords = CompareToActiveGames(user, 'password');
-        if(matchedPasswords){
-          var hostGame = returnGameObject(user, 'name');
-          //join the game channel
+        if(hostGame.password == user.password){
+
+          //check if user is in database
           knex('game_users').select().where({game_id: hostGame.id, user_id: user.userID}).then(function(previousUser){
+            //if rejoining the game
             if(previousUser){
-              socket.join(user.name);
-              //get the game object
-              var hostGame = returnGameObject(user, 'name');
-              //add the user to game object and set score to zero
-              //set and emit the game token
-              if(!hostGame.players[user.userID]){
-                hostGame.players[user.userID] = {};
-                hostGame.players[user.userID].imgURL = user.imgURL;
-                hostGame.players[user.userID].username = user.username;
-                hostGame.players[user.userID].score = 0;
-                hostGame.players[user.userID].answers = [];
+              joinChannel(user, hostGame);
 
-              }
-              var token = jwt.sign(user, process.env.JWT_SECRET, {
-                expiresIn:15778463,
-              });
-              socket.emit('gameToken', token);
+            //if new user to the game
             }else{
+              //add user to database
               knex('game_users').insert({game_id: hostGame.id, user_id: user.userID}).then(function(){
-                socket.join(user.name);
-                //get the game object
-                var hostGame = returnGameObject(user, 'name');
-                //add the user to game object and set score to zero
-                if(!hostGame.players[user.userID]){
-                  hostGame.players[user.userID] = {};
-                  hostGame.players[user.userID].imgURL = user.imgURL;
-                  hostGame.players[user.userID].username = user.username;
-                  hostGame.players[user.userID].score = 0;
-                  hostGame.players[user.userID].answers = [];
-
-                }
-                //set and emit the game token
-                var token = jwt.sign(user, process.env.JWT_SECRET, {
-                  expiresIn:15778463,
-                });
-                socket.emit('gameToken', token);
+                joinChannel(user, hostGame);
               });
             }
           })
         }else{
-          //incorrect password
+          //password didn't match
           socket.emit('fail', 'incorrect password.');
         }
       }else{
@@ -107,12 +85,18 @@ module.exports=function(server){
       }
     });
 
+
+
+
     //host begins a round with a timer and ask question
     socket.on('ask question', function(question){
       question.host_id = question.user_id
+      // make sure host is asking questions
       var isHost = CompareToActiveGames(question, 'host_id');
       if(isHost){
+        //get the game state
         var hostGame = returnGameObject(question, 'host_id');
+        //insert question to database
         knex('rounds').insert({game_id: hostGame.id, round_number: hostGame.activeRound, question_id: question.id},'id').then(function(id){
           question.roundID = id[0];
           hostGame.rounds[hostGame.activeRound-1] = question;
@@ -126,40 +110,51 @@ module.exports=function(server){
           content.choice.D = question.response_d;
           content.choice.E = question.response_e;
           content.round = hostGame.activeRound;
+          //submit the question to the users
           io.in(hostGame.name).emit('question', content);
         });
-        //set timeout ends the round
+        //set round length
         var timeout = hostGame.questionTime*1000;
+        //when round ends
         setTimeout(function(){
-          //update scores
+          //get answers from responses
           for(var key in hostGame.players){
-            //update database and game scores
+            //if the user responded
             if(hostGame.players[key].answers[hostGame.activeRound-1]){
+              //if response matches right answer
               if(hostGame.rounds[hostGame.activeRound-1].correct_answer===hostGame.players[key].answers[hostGame.activeRound-1].choice){
+                //100 points for right answer
+                //give bonus points for how fast they answered
                 var elapsedSec = (Date.now()-hostGame.players[key].answers[hostGame.activeRound-1].time)/1000
                 var incrementer = (hostGame.questionTime/10)
                 var bonusScore = Math.floor(elapsedSec/incrementer)*10
                 hostGame.players[key].score += 100 + bonusScore;
+                //add ansers to database
                 knex('user_responses').insert({user_id: key, correct_answer: true, round_id: hostGame.rounds[hostGame.activeRound-1].roundID}).then(function(data){
                   console.log(data);
                 });
+              //if incorrect
               }else{
+                //add answers to database
                 knex('user_responses').insert({user_id: key, correct_answer: false, round_id: hostGame.rounds[hostGame.activeRound-1].roundID}).then(function(data){
                   console.log(data);
                 });
               }
+            //if no response from the user
             }else{
+              //add answers to database
               knex('user_responses').insert({user_id: key, correct_answer: false, round_id: hostGame.rounds[hostGame.activeRound-1].roundID}).then(function(data){
                 console.log(data);
               });
             }
           }
-          //check to see if
-          //send user scores
 
+          //after updated scores
+          //increment round
           hostGame.activeRound++;
+          //check to see if end of game
           if(hostGame.activeRound>hostGame.numberOfRounds){
-            console.log('game ending')
+            //update game with end of game function
             var winnerId;
             var currentBestScore=0;
             for(var key2 in hostGame.players){
@@ -168,14 +163,16 @@ module.exports=function(server){
                 winnerId = key2;
               }
             }
-            console.log(winnerId);
+            //insert game winner in database
             knex('games').update({winner_id: winnerId}).where('id', hostGame.id).then(function(){
+              //remove game for active games
               removeGame(hostGame);
+              //send final results
               io.in(hostGame.name).emit('game over', hostGame.players);
             }).catch(function(error){
               io.in(hostGame.name).emit('game over', hostGame.players);
             });
-
+          //if not end of game send round results back to user
           }else{
             var gameState = {
               players: hostGame.players,
@@ -185,20 +182,28 @@ module.exports=function(server){
           );
           }
         }, timeout);
+      //if not the game host
       }else{
         socket.emit('message', 'You are not currently hosting a game');
       }
   });
 
+
+
+
+
     //player submits and answer to a question
     socket.on('answer', function(userResponse){
-
+      //get the game state
       var hostGame = returnGameObject(userResponse, 'name');
+      //create a response
       var response = {
         choice: userResponse.response,
         time: Date.now(),
       }
+      //check that the response is for the correct round
       if(userResponse.round === hostGame.activeRound){
+        //add response to game state
         hostGame.players[userResponse.userID].answers[userResponse.round-1] = response;
         io.in(hostGame.name).emit('message', 'user submitted an answer');
       }else{
@@ -214,6 +219,7 @@ module.exports=function(server){
   });
 };
 
+// compares data for find matches between two games
 function CompareToActiveGames(game, comparison){
   var foundComparison = false;
   games.forEach(function(hostedGame){
@@ -224,6 +230,7 @@ function CompareToActiveGames(game, comparison){
   return foundComparison;
 }
 
+//returns game state to be modified
 function returnGameObject(game, comparison){
   var gameObject;
   games.forEach(function(hostedGame){
@@ -234,10 +241,34 @@ function returnGameObject(game, comparison){
   return gameObject;
 }
 
+
+//pulls game from array
 function removeGame(game){
   games.forEach(function(hostedGame, i, games){
     if(game.name===hostedGame.name){
       games.splice(i, 1);
     }
   });
+}
+
+//joins game socket channel 
+function joinChannel(user, hostGame){
+  //join the game channel
+  socket.join(user.name);
+
+  //add the user to game object and set score to zero
+
+  if(!hostGame.players[user.userID]){
+    hostGame.players[user.userID] = {};
+    hostGame.players[user.userID].imgURL = user.imgURL;
+    hostGame.players[user.userID].username = user.username;
+    hostGame.players[user.userID].score = 0;
+    hostGame.players[user.userID].answers = [];
+
+  }
+  //set and emit the game token
+  var token = jwt.sign(user, process.env.JWT_SECRET, {
+    expiresIn:15778463,
+  });
+  socket.emit('gameToken', token);
 }
